@@ -20,7 +20,7 @@ flan_model = PeftModel.from_pretrained(base_model, path + "/checkpoint", is_trai
 tokenizer = AutoTokenizer.from_pretrained("google/flan-t5-large")
 
 # Configure Gemini API
-genai.configure(api_key="AIzaSyAER3pJ3aGiHoPlh4v9SuLDmCcIKqKC_UE")
+genai.configure(api_key="")
 gemini_model = ChatGoogleGenerativeAI(model='models/gemini-2.0-flash')
 
 
