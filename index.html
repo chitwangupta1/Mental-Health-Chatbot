@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mental Health Chatbot</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        #chat-container { width: 50%; margin: auto; border: 1px solid #ccc; padding: 10px; }
+        .message { margin: 5px; padding: 8px; border-radius: 5px; }
+        .user { background-color: #d1e7dd; text-align: right; }
+        .bot { background-color: #f8d7da; text-align: left; }
+    </style>
+</head>
+<body>
+    <h2>Mental Health Chatbot</h2>
+    <div id="chat-container"></div>
+    <input type="text" id="user-input" placeholder="Type your message..." />
+    <button onclick="sendMessage()">Send</button>
+
+    <script>
+        function sendMessage() {
+            let input = document.getElementById("user-input").value;
+            let chatContainer = document.getElementById("chat-container");
+
+            // Display user message
+            let userMessage = document.createElement("div");
+            userMessage.className = "message user";
+            userMessage.innerText = input;
+            chatContainer.appendChild(userMessage);
+
+            fetch("/api/chat/", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: input })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Display bot response
+                let botMessage = document.createElement("div");
+                botMessage.className = "message bot";
+                botMessage.innerText = data.response + " (Source: " + data.source + ")";
+                chatContainer.appendChild(botMessage);
+            });
+
+            document.getElementById("user-input").value = "";
+        }
+    </script>
+</body>
+</html>

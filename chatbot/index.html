@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mental Health Chatbot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f5f5f5;
+        }
+
+        #chat-container {
+            width: 60%;
+            margin: 30px auto;
+            background: white;
+            border: 1px solid #ccc;
+            padding: 15px;
+            border-radius: 10px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .message {
+            margin: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .user {
+            background-color: #d1e7dd;
+            text-align: right;
+            margin-left: auto;
+        }
+
+        .bot {
+            background-color: #f8d7da;
+            text-align: left;
+            margin-right: auto;
+        }
+
+        .feedback-buttons {
+            margin-top: 5px;
+            text-align: left;
+        }
+
+        .feedback-buttons button {
+            margin: 0 3px;
+            padding: 4px 8px;
+            font-size: 16px;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+
+        #input-section {
+            margin-top: 20px;
+        }
+
+        #user-input {
+            width: 60%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            padding: 10px 15px;
+            border-radius: 5px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h2>Mental Health Chatbot</h2>
+    <div id="chat-container"></div>
+
+    <div id="input-section">
+        <input type="text" id="user-input" placeholder="Type your message..." />
+        <button onclick="sendMessage()">Send</button>
+    </div>
+
+    <script>
+        function sendMessage() {
+            const inputField = document.getElementById("user-input");
+            const message = inputField.value.trim();
+            if (!message) return;
+
+            const chatContainer = document.getElementById("chat-container");
+
+            // Show user message
+            const userMessageDiv = document.createElement("div");
+            userMessageDiv.className = "message user";
+            userMessageDiv.innerText = message;
+            chatContainer.appendChild(userMessageDiv);
+            inputField.value = "";
+
+            // Fetch chatbot response
+            fetch("/api/chat/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCSRFToken()
+                },
+                body: JSON.stringify({ message: message })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Show bot message
+                const botMessageDiv = document.createElement("div");
+                botMessageDiv.className = "message bot";
+                botMessageDiv.innerText = data.response;
+                chatContainer.appendChild(botMessageDiv);
+
+                // Add feedback buttons
+                const feedbackButtons = document.createElement("div");
+                feedbackButtons.className = "feedback-buttons";
+                feedbackButtons.innerHTML = `
+                    <button onclick="sendFeedback('${escapeQuotes(message)}', '${escapeQuotes(data.response)}', 'up')">👍</button>
+                    <button onclick="sendFeedback('${escapeQuotes(message)}', '${escapeQuotes(data.response)}', 'down')">👎</button>
+                `;
+                chatContainer.appendChild(feedbackButtons);
+
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            });
+        }
+
+        function sendFeedback(question, answer, feedback) {
+            fetch("/api/chat/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCSRFToken()
+                },
+                body: JSON.stringify({
+                    feedback: true,
+                    original_question: question,
+                    response_text: answer,
+                    feedback_value: feedback
+                })
+            })
+            .then(response => response.json())
+        }
+
+        function getCSRFToken() {
+            let cookieValue = null;
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.startsWith("csrftoken=")) {
+                    cookieValue = decodeURIComponent(cookie.substring("csrftoken=".length));
+                    break;
+                }
+            }
+            return cookieValue;
+        }
+
+        function escapeQuotes(str) {
+            return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        }
+
+        // Enter key shortcut
+        document.getElementById("user-input").addEventListener("keydown", function(e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
